@@ -49,6 +49,26 @@ app.get('/api/history', (req: Request, res: Response): void => {
   }
 });
 
+app.delete('/api/history/:id', (req: Request, res: Response) => {
+  const id = req.params.id;
+  try {
+    db.prepare(`DELETE FROM questions WHERE id = ?`).run(id);
+    res.sendStatus(200);
+  } catch {
+    res.status(500).json({ error: 'Kunde inte ta bort frågan.' });
+  }
+});
+
+app.delete('/api/history', (req: Request, res: Response) => {
+  try {
+    db.prepare(`DELETE FROM questions`).run();
+    res.sendStatus(200);
+  } catch {
+    res.status(500).json({ error: 'Kunde inte rensa frågehistoriken.' });
+  }
+});
+
+
 
 app.listen(3001, () => {
   console.log('✅ Backend körs på http://localhost:3001');

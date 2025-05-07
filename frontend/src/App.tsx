@@ -10,6 +10,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [dbHistory, setDbHistory] = useState<{ id: number; question: string; created_at: string }[]>([]);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -17,6 +18,17 @@ function App() {
     document.documentElement.classList.toggle("dark", darkMode);
     localStorage.setItem("dark-mode", String(darkMode));
   }, [darkMode]);
+
+  useEffect(() => {
+    loadHistory();
+  }, []);
+
+  const loadHistory = () => {
+    fetch('http://localhost:3001/api/history')
+      .then(res => res.json())
+      .then(setDbHistory)
+      .catch(() => setDbHistory([]));
+  };
 
   const askQuestion = async () => {
     if (!question.trim()) return;
@@ -37,10 +49,11 @@ function App() {
 
       if (data.answer) {
         setAnswer(data.answer);
+        loadHistory(); // Ladda om efter ny fråga
       } else {
         setError('Inget svar från AI:n.');
       }
-    } catch (err) {
+    } catch {
       setError('Kunde inte kontakta servern.');
     }
 
@@ -63,6 +76,17 @@ function App() {
     setError('');
     setCopied(false);
     textareaRef.current?.focus();
+  };
+
+  const handleDelete = async (id: number) => {
+    const confirmed = window.confirm('Vill du verkligen ta bort frågan?');
+    if (!confirmed) return;
+
+    await fetch(`http://localhost:3001/api/history/${id}`, {
+      method: 'DELETE',
+    });
+
+    loadHistory();
   };
 
   const exampleQuestions = [
@@ -99,7 +123,7 @@ function App() {
           </button>
         </div>
 
-        {/* 🧠 Exempelknappar */}
+        {/* Exempelknappar */}
         <div className="mb-6">
           <h2 className="text-lg font-semibold mb-2">Exempel (Scania-relaterade):</h2>
           <div className="flex flex-wrap gap-4">
@@ -115,7 +139,7 @@ function App() {
           </div>
         </div>
 
-        {/* 💬 Textinmatning och svar */}
+        {/* Formulär */}
         <div className="space-y-6">
           <textarea
             ref={textareaRef}
@@ -134,8 +158,7 @@ function App() {
             {loading ? 'Tänker...' : 'Fråga AI:n'}
           </button>
 
-          {error && <p className="text-red-400">{error}</p>}
-
+          {/* Svar */}
           {answer && (
             <div className="mt-6 p-4 rounded-xl bg-pink-100 dark:bg-gray-800 text-gray-900 dark:text-white">
               <div className="flex justify-between items-center mb-2">
@@ -148,6 +171,36 @@ function App() {
                 </button>
               </div>
               <p className="whitespace-pre-wrap">{answer}</p>
+            </div>
+          )}
+
+          {/* Historik */}
+          {dbHistory.length > 0 && (
+            <div className="mt-10">
+              <h3 className="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-yellow-400 mb-4 select-none">
+                📘 Senaste frågor
+              </h3>
+
+              <ul className="space-y-2 text-sm">
+                {dbHistory.map((entry) => (
+                  <li
+                    key={entry.id}
+                    className="relative bg-white/80 dark:bg-gray-800 text-black dark:text-white p-4 rounded-xl shadow border border-white/20 dark:border-gray-700"
+                  >
+                    <div className="font-medium mb-1 cursor-pointer hover:underline" onClick={() => handleExampleClick(entry.question)}>
+                      {entry.question}
+                    </div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">{entry.created_at}</div>
+                    <button
+                      onClick={() => handleDelete(entry.id)}
+                      className="absolute top-2 right-2 text-sm text-red-400 hover:text-red-600"
+                      title="Ta bort"
+                    >
+                      ✖
+                    </button>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </div>
