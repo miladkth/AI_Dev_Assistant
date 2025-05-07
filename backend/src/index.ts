@@ -10,6 +10,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Grundläggande route för root
+app.get('/', (req: Request, res: Response) => {
+  res.send('Backend är igång!');
+});
+
 app.post('/api/query', async (req: Request, res: Response): Promise<void> => {
   const { question } = req.body;
 
@@ -67,8 +72,6 @@ app.delete('/api/history', (req: Request, res: Response) => {
     res.status(500).json({ error: 'Kunde inte rensa frågehistoriken.' });
   }
 });
-
-
 
 app.listen(3001, () => {
   console.log('✅ Backend körs på http://localhost:3001');

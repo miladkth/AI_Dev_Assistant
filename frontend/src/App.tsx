@@ -23,11 +23,14 @@ function App() {
     loadHistory();
   }, []);
 
-  const loadHistory = () => {
-    fetch('http://localhost:3001/api/history')
-      .then(res => res.json())
-      .then(setDbHistory)
-      .catch(() => setDbHistory([]));
+  const loadHistory = async () => {
+    try {
+      const res = await fetch('http://localhost:3001/api/history');
+      const data = await res.json();
+      setDbHistory(data);
+    } catch {
+      setDbHistory([]);
+    }
   };
 
   const askQuestion = async () => {
@@ -49,7 +52,7 @@ function App() {
 
       if (data.answer) {
         setAnswer(data.answer);
-        loadHistory(); // Ladda om efter ny fråga
+        loadHistory();
       } else {
         setError('Inget svar från AI:n.');
       }
@@ -82,11 +85,14 @@ function App() {
     const confirmed = window.confirm('Vill du verkligen ta bort frågan?');
     if (!confirmed) return;
 
-    await fetch(`http://localhost:3001/api/history/${id}`, {
-      method: 'DELETE',
-    });
-
-    loadHistory();
+    try {
+      await fetch(`http://localhost:3001/api/history/${id}`, {
+        method: 'DELETE',
+      });
+      loadHistory();
+    } catch {
+      setError('Kunde inte ta bort frågan.');
+    }
   };
 
   const exampleQuestions = [
@@ -123,7 +129,6 @@ function App() {
           </button>
         </div>
 
-        {/* Exempelknappar */}
         <div className="mb-6">
           <h2 className="text-lg font-semibold mb-2">Exempel (Scania-relaterade):</h2>
           <div className="flex flex-wrap gap-4">
@@ -139,7 +144,6 @@ function App() {
           </div>
         </div>
 
-        {/* Formulär */}
         <div className="space-y-6">
           <textarea
             ref={textareaRef}
@@ -158,7 +162,10 @@ function App() {
             {loading ? 'Tänker...' : 'Fråga AI:n'}
           </button>
 
-          {/* Svar */}
+          {error && (
+            <div className="text-red-500 text-sm text-center">{error}</div>
+          )}
+
           {answer && (
             <div className="mt-6 p-4 rounded-xl bg-pink-100 dark:bg-gray-800 text-gray-900 dark:text-white">
               <div className="flex justify-between items-center mb-2">
@@ -174,7 +181,6 @@ function App() {
             </div>
           )}
 
-          {/* Historik */}
           {dbHistory.length > 0 && (
             <div className="mt-10">
               <h3 className="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-yellow-400 mb-4 select-none">
