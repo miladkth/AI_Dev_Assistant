@@ -5,10 +5,45 @@ function App() {
     return localStorage.getItem("dark-mode") === "true";
   });
 
+  const [question, setQuestion] = useState('');
+  const [answer, setAnswer] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
     localStorage.setItem("dark-mode", String(darkMode));
   }, [darkMode]);
+
+  const askQuestion = async () => {
+    if (!question.trim()) return;
+  
+    setLoading(true);
+    setAnswer('');
+    setError('');
+  
+    try {
+      const response = await fetch('http://localhost:3001/api/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question }),
+      });
+  
+      const data = await response.json();
+  
+      if (data.answer) {
+        setAnswer(data.answer);
+      } else {
+        setError('Inget svar från AI:n.');
+      }
+    } catch (err) {
+      setError('Kunde inte kontakta servern.');
+    }
+  
+    setLoading(false);
+  };
+  
 
   return (
     <div className="min-h-screen bg-gradient-to-tr from-indigo-600 via-purple-700 to-pink-600 dark:from-gray-900 dark:via-gray-800 dark:to-black text-black dark:text-white p-6 flex items-center justify-center">
@@ -25,9 +60,33 @@ function App() {
             <i className={`fas ${darkMode ? "fa-sun" : "fa-moon"}`}></i>
           </button>
         </div>
-        <p className="text-gray-700 dark:text-gray-300 text-lg">
-          Skriv en fråga till AI-assistenten!
-        </p>
+        <div className="space-y-6">
+  <textarea
+    rows={4}
+    value={question}
+    onChange={(e) => setQuestion(e.target.value)}
+    placeholder="Skriv din fråga till AI:n..."
+    className="w-full rounded-xl p-4 bg-white dark:bg-gray-800 text-black dark:text-white border dark:border-gray-700"
+  />
+
+  <button
+    onClick={askQuestion}
+    disabled={loading}
+    className="w-full py-3 rounded-xl bg-pink-500 hover:bg-pink-600 text-white font-bold shadow-lg transition disabled:opacity-50"
+  >
+    {loading ? 'Tänker...' : 'Fråga AI:n'}
+  </button>
+
+  {error && <p className="text-red-400">{error}</p>}
+
+  {answer && (
+    <div className="mt-6 p-4 rounded-xl bg-pink-100 dark:bg-gray-800 text-gray-900 dark:text-white">
+      <strong>Svar från AI:</strong>
+      <p className="mt-2 whitespace-pre-wrap">{answer}</p>
+    </div>
+  )}
+</div>
+
       </div>
     </div>
   );
