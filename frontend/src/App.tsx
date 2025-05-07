@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 function App() {
   const [darkMode, setDarkMode] = useState(() => {
@@ -10,6 +10,8 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
@@ -55,6 +57,32 @@ function App() {
     }
   };
 
+  const handleExampleClick = (text: string) => {
+    setQuestion(text);
+    setAnswer('');
+    setError('');
+    setCopied(false);
+    textareaRef.current?.focus();
+  };
+
+  const exampleQuestions = [
+    {
+      id: 1,
+      label: "AI inom fordonsdiagnostik",
+      text: "Hur kan AI användas för att förbättra fordonens felsökning hos Scania?"
+    },
+    {
+      id: 2,
+      label: "Hållbar produktion",
+      text: "Vilka AI-metoder kan bidra till en mer hållbar produktion inom fordonsindustrin?"
+    },
+    {
+      id: 3,
+      label: "Fjärrövervakning av lastbilar",
+      text: "Hur kan fjärrövervakning med AI hjälpa Scania att minska driftstopp?"
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-tr from-indigo-600 via-purple-700 to-pink-600 dark:from-gray-900 dark:via-gray-800 dark:to-black text-black dark:text-white p-6 flex items-center justify-center">
       <div className="w-full max-w-3xl bg-white/90 dark:bg-gray-900/90 backdrop-blur-md rounded-3xl shadow-2xl p-10 border border-white/20">
@@ -71,8 +99,26 @@ function App() {
           </button>
         </div>
 
+        {/* 🧠 Exempelknappar */}
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold mb-2">Exempel (Scania-relaterade):</h2>
+          <div className="flex flex-wrap gap-4">
+            {exampleQuestions.map(example => (
+              <button
+                key={example.id}
+                onClick={() => handleExampleClick(example.text)}
+                className="px-4 py-2 bg-gradient-to-r from-pink-500 to-yellow-400 text-white rounded-full shadow-md hover:brightness-110 transition text-sm"
+              >
+                {example.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 💬 Textinmatning och svar */}
         <div className="space-y-6">
           <textarea
+            ref={textareaRef}
             rows={4}
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
